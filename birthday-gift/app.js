@@ -13,7 +13,7 @@
     voucherNote: "挑你喜欢的，剩下的交给我。", photos: [],
     music: { title: "Close to you", artist: "藤井 風", src: "", listenUrl: "https://music.youtube.com/search?q=Fujii+Kaze+Close+to+you" },
   };
-  let config, draft, openState = "closed", photoIndex = 0, toastTimer, dragIndex = null;
+  let config, draft, openState = "closed", photoIndex = 0, toastTimer, celebrationTimer, dragIndex = null;
   let accepted = false, fileOperations = 0;
   const audio = $("#background-music");
 
@@ -147,13 +147,17 @@
   }
 
   function celebrate() {
-    if (accepted) return;
+    const firstTime = !accepted;
     accepted = true;
     $("#accept-gift").replaceChildren(document.createTextNode("已收好这份心意 ♡"));
     $("#accept-gift").classList.add("is-accepted");
     $("#accept-gift").setAttribute("aria-pressed", "true");
-    toast("这份偏爱，归你啦。记得找我兑现 ♡");
-    if (reducedMotion.matches) return;
+    toast(firstTime ? "这份偏爱，归你啦。记得找我兑现 ♡" : "已经替你收好啦，这份偏爱一直为你保留 ♡");
+    clearTimeout(celebrationTimer);
+    if (reducedMotion.matches) {
+      $("#celebration").replaceChildren();
+      return;
+    }
     const pieces = Array.from({ length: 42 }, () => {
       const piece = document.createElement("i");
       const random = (min, max) => Math.random() * (max - min) + min;
@@ -161,7 +165,7 @@
       return piece;
     });
     $("#celebration").replaceChildren(...pieces);
-    setTimeout(() => $("#celebration").replaceChildren(), 5500);
+    celebrationTimer = setTimeout(() => $("#celebration").replaceChildren(), 5500);
   }
 
   function openPhoto(index) {
@@ -181,26 +185,125 @@
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
+  function createVoucherCanvas() {
+    // Export a complete landscape ticket at a fixed print layout, including its
+    // stub. A phone's narrow viewport must not crop or rearrange the saved gift.
+    const width = 1200, height = 432, margin = 16, scale = 2, divider = 1020;
+    const canvas = document.createElement("canvas");
+    canvas.width = (width + margin * 2) * scale;
+    canvas.height = (height + margin * 2) * scale;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    const voucherStyle = getComputedStyle($("#voucher"));
+    const paper = getComputedStyle($("#letter")).backgroundColor;
+    const sans = getComputedStyle($("#voucher-note")).fontFamily;
+    const serif = getComputedStyle($(".voucher-type")).fontFamily;
+    const numberFont = getComputedStyle($("#voucher-amount")).fontFamily;
+    const content = (selector) => $(selector).textContent.trim();
+
+    ctx.scale(scale, scale);
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, width + margin * 2, height + margin * 2);
+    ctx.translate(margin, margin);
+    ctx.fillStyle = voucherStyle.backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+
+    function textLine(text, x, y, size, font, color, spacing = 0, maxWidth = width, align = "left") {
+      ctx.font = `${size}px ${font}`;
+      ctx.fillStyle = color;
+      const chars = Array.from(text);
+      const length = chars.reduce((total, char) => total + ctx.measureText(char).width, 0) + Math.max(0, chars.length - 1) * spacing;
+      const fit = length ? Math.min(1, maxWidth / length) : 1;
+      const offset = align === "center" ? length * fit / 2 : align === "right" ? length * fit : 0;
+      ctx.save();
+      ctx.translate(x - offset, y);
+      ctx.scale(fit, 1);
+      let cursor = 0;
+      for (const char of chars) {
+        ctx.fillText(char, cursor, 0);
+        cursor += ctx.measureText(char).width + spacing;
+      }
+      ctx.restore();
+    }
+
+    textLine(content(".voucher-top > span"), 50, 70, 10.5, sans, "#999", 3);
+    textLine(content(".voucher-type"), 50, 139, 22, serif, "#e5e5e5", 6);
+    textLine(content(".voucher-value > span:first-child"), 50, 279, 38, numberFont, "#e5e5e5");
+    ctx.font = `118px ${numberFont}`;
+    ctx.fillStyle = "#e5e5e5";
+    const amount = content("#voucher-amount");
+    const amountWidth = Math.min(ctx.measureText(amount).width, 790);
+    ctx.fillText(amount, 98, 279, 790);
+    textLine(content(".voucher-currency"), 98 + amountWidth + 24, 279, 11, sans, "#888", 1.5);
+    textLine(content("#voucher-note"), 50, 330, 15, sans, "#aaa", 1.5, 915);
+    textLine(content(".voucher-bottom > span:first-child"), 50, 391, 9, sans, "#7e7e7e", 1, 760);
+    textLine(content(".voucher-bottom > span:last-child"), divider - 50, 391, 9, sans, "#7e7e7e", 1.4, 140, "right");
+
+    // The same fine-line star as the upper-right corner of the on-page ticket.
+    ctx.save();
+    ctx.translate(divider - 63, 64);
+    ctx.strokeStyle = "#b7b7b7";
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let index = 0; index < 4; index++) {
+      const angle = index * Math.PI / 4;
+      ctx.moveTo(-19 * Math.cos(angle), -19 * Math.sin(angle));
+      ctx.lineTo(19 * Math.cos(angle), 19 * Math.sin(angle));
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.strokeStyle = "#5a5a5a";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(divider, 0);
+    ctx.lineTo(divider, height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const stubCenter = (divider + width) / 2;
+    const stubLabel = content(".stub-label");
+    const split = stubLabel.lastIndexOf(" ");
+    const stubLines = split > 0 ? [stubLabel.slice(0, split), stubLabel.slice(split + 1)] : [stubLabel];
+    ctx.save();
+    ctx.translate(stubCenter + 10, 72);
+    ctx.rotate(Math.PI / 2);
+    stubLines.forEach((line, index) => textLine(line, 0, index * 21, 10, sans, "#999", 3));
+    ctx.restore();
+
+    // Decorative barcode, matching the on-page repeating stripe pattern.
+    const barcodeWidth = 84, barcodeX = stubCenter - barcodeWidth / 2;
+    ctx.fillStyle = "#777";
+    for (let offset = 0; offset < barcodeWidth; offset += 24) {
+      for (const [start, end] of [[0, 1.5], [4.5, 7.5], [9, 10.5], [15, 19.5]]) {
+        const left = offset + start;
+        if (left < barcodeWidth) ctx.fillRect(barcodeX + left, 282, Math.min(end - start, barcodeWidth - left), 41);
+      }
+    }
+    textLine(content(".stub-love"), stubCenter, 375, 9, sans, "#b4b4b4", 1.4, 150, "center");
+
+    // Cut both semicircular perforations out of the complete ticket edge.
+    ctx.fillStyle = paper;
+    for (const y of [0, height]) {
+      ctx.beginPath();
+      ctx.arc(divider, y, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return canvas;
+  }
+
   async function saveVoucher() {
     const button = $("#save-voucher"); button.disabled = true;
     try {
       await document.fonts.ready;
-      const canvas = document.createElement("canvas"); canvas.width = 1600; canvas.height = 1050;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#efefef"; ctx.fillRect(0,0,1600,1050);
-      ctx.fillStyle = "#232323"; ctx.fillRect(100,100,1400,740);
-      ctx.fillStyle = "#aaa"; ctx.font = "18px sans-serif"; ctx.fillText("THE BIRTHDAY GIFT  /  EXCLUSIVELY FOR YOU",160,170);
-      ctx.strokeStyle = "#555"; ctx.beginPath();ctx.moveTo(160,207);ctx.lineTo(1440,207);ctx.stroke();
-      ctx.fillStyle = "#eee"; ctx.font = "38px serif";ctx.fillText("服装代金券",160,290);
-      ctx.font = "180px Georgia, serif";ctx.fillText(`¥ ${config.amount.toLocaleString("en-US")}`,150,510,1250);
-      ctx.fillStyle = "#bbb";ctx.font = "28px sans-serif";ctx.fillText(config.voucherNote,160,600,1240);
-      ctx.font = "23px sans-serif";ctx.fillText(`TO: ${config.recipient}`,160,735,680);
-      ctx.textAlign = "right";ctx.fillText("WITH LOVE · NO. 0001",1435,735);
-      ctx.textAlign = "left";ctx.fillStyle="#555";ctx.font="25px serif";ctx.fillText(`生日快乐，${config.recipient}。`,100,925,1350);
-      ctx.fillStyle="#888";ctx.font="20px sans-serif";ctx.fillText("这是一份私人生日礼物。选中喜欢的衣服，就来找我兑现。",100,978,1400);
+      const canvas = createVoucherCanvas();
       const blob = await new Promise((resolve) => canvas.toBlob(resolve,"image/png"));
       if (!blob) throw new Error("Canvas export failed");
-      download(blob,"生日礼品券.png"); toast("礼品券已生成，愿你每次穿上都开心。");
+      download(blob,"生日礼品券.png"); toast("整张礼品券已生成，愿你每次穿上都开心。");
     } catch { toast("暂时无法保存，也可以截图收藏这份心意。"); }
     finally { button.disabled = false; }
   }

@@ -3,7 +3,6 @@
 Run with the site server on port 4173. Test artifacts are ignored by Git.
 Generated image/audio fixtures test the pipeline; they are not recipient assets.
 """
-import io
 import json
 import math
 import os
@@ -12,7 +11,7 @@ import struct
 import tempfile
 import wave
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +28,24 @@ def check(name, condition):
 
 def settle(page):
     page.evaluate("async () => { await Promise.all(document.getAnimations().filter(a => a.effect.getComputedTiming().iterations !== Infinity).map(a => a.finished.catch(() => {}))); }")
+
+
+def check_complete_voucher(path):
+    with Image.open(path) as original:
+        image = original.convert("RGB")
+        width, height = image.size
+        check("saved voucher is a high-resolution landscape ticket", width >= 2000 and 2.4 < width / height < 3)
+        # The right-hand stub must contain actual alternating barcode stripes.
+        # This checks the downloaded pixels, not the presence of export code.
+        transitions = []
+        for y in range(int(height * .55), int(height * .76)):
+            row = [image.getpixel((x, y))[0] > 75 for x in range(int(width * .86), int(width * .97))]
+            transitions.append(sum(a != b for a, b in zip(row, row[1:])))
+        check("download includes the right-hand barcode stub", max(transitions) >= 20)
+        cutouts = []
+        for y in [int(height * .055), int(height * .945)]:
+            cutouts.append(sum(image.getpixel((x, y))[0] > 220 for x in range(int(width * .81), int(width * .87))))
+        check("download preserves both perforation cutouts", all(count > 12 for count in cutouts))
 
 
 with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwright() as p:
@@ -71,12 +88,17 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     page.locator("#accept-gift").click()
     expect(page.locator("#accept-gift")).to_have_attribute("aria-pressed", "true")
     check("gift acceptance is visible and announced", "归你啦" in page.locator("#status").inner_text())
+    first_confetti = page.locator("#celebration i").first.element_handle()
+    expect(page.locator("#status")).to_have_class("toast", timeout=6000)
+    page.locator("#accept-gift").click()
+    expect(page.locator("#status")).to_have_class("toast is-visible")
+    check("accepted gift responds again after its first confirmation expires", "已经替你收好" in page.locator("#status").inner_text())
+    check("repeat acceptance restarts the celebration", first_confetti.evaluate("el => !el.isConnected") and page.locator("#celebration i").count() > 0)
     with page.expect_download() as download:
         page.locator("#save-voucher").click()
     voucher_path = RESULTS / "voucher.png"
     download.value.save_as(voucher_path)
-    with Image.open(voucher_path) as voucher:
-        check("voucher saves a real 1600×1050 PNG", voucher.size == (1600, 1050))
+    check_complete_voucher(voucher_path)
     page.locator("#close-letter").click()
     expect(page.locator("#invitation")).to_be_visible()
     check("envelope closes and can be reopened", page.locator("#open-envelope").is_enabled())
@@ -92,6 +114,12 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     expect(preview.locator("#letter")).to_be_visible(timeout=6000)
     settle(preview)
     preview.screenshot(path=RESULTS / "mobile-recipient-letter.png", full_page=True)
+    with preview.expect_download() as mobile_download:
+        preview.locator("#save-voucher").click()
+    mobile_voucher_path = RESULTS / "voucher-mobile.png"
+    mobile_download.value.save_as(mobile_voucher_path)
+    with Image.open(voucher_path) as desktop_voucher, Image.open(mobile_voucher_path) as mobile_voucher:
+        check("phone downloads the same complete ticket as desktop", desktop_voucher.size == mobile_voucher.size and ImageChops.difference(desktop_voucher.convert("RGB"), mobile_voucher.convert("RGB")).getbbox() is None)
     mobile_preview.close()
 
     page.goto(BASE + "/?edit")
@@ -153,6 +181,12 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     recipient.locator("#open-envelope").click()
     expect(recipient.locator("#letter")).to_be_visible()
     check("reduced-motion preference opens the letter immediately", recipient.locator("#invitation").is_hidden())
+    recipient.locator("#accept-gift").click()
+    expect(recipient.locator("#status")).to_contain_text("归你啦")
+    recipient.locator("#accept-gift").click()
+    expect(recipient.locator("#status")).to_contain_text("已经替你收好")
+    check("repeat acceptance works on touch devices with reduced motion", recipient.locator("#status").is_visible() and recipient.locator("#accept-gift").get_attribute("aria-pressed") == "true")
+    check("reduced-motion acceptance avoids confetti", recipient.locator("#celebration i").count() == 0)
     expect(recipient.locator(".photo-item img")).to_have_count(2)
     check("embedded recipient photos really decode", recipient.locator(".photo-item img").first.evaluate("async img => { await img.decode(); return img.naturalWidth > 0; }"))
     check("exported recipient page requires no external network resources", external_requests == [])
