@@ -1,0 +1,14 @@
+{
+  "name": "dear-you-birthday-gift",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A monochrome birthday letter and a personal clothing gift voucher.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs --dist",
+    "check": "node --check app.js && node --check scripts/build.mjs && node --check scripts/serve.mjs"
+  }
+}

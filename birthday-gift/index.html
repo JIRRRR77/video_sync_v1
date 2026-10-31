@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#161616" />
+    <meta name="description" content="有一份只属于你的生日心意，等你亲手拆开。" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta property="og:title" content="有一封信，想交给你。" />
+    <meta property="og:description" content="轻轻打开，是一份只属于你的生日心意。" />
+    <title>Dear you — 一份生日心意</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23161616'/%3E%3Cpath d='M15 23h34v24H15zM15 23l17 14 17-14' fill='none' stroke='%23ddd' stroke-width='2'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+    <script id="gift-config" type="application/json">null</script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="wordmark" href="#" aria-label="回到信封">dear you<span class="wordmark-dot">.</span></a>
+      <span class="header-note">A LITTLE LOVE, SEALED INSIDE</span>
+      <button class="music-toggle" id="music-toggle" type="button" aria-label="音乐：Close to you" aria-expanded="false" aria-controls="music-panel">
+        <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="music-caption">CLOSE TO YOU</span>
+        <span class="music-state" aria-hidden="true">↗</span>
+      </button>
+      <div class="music-panel" id="music-panel" hidden>
+        <span class="eyebrow">A SONG FOR YOU</span>
+        <p class="track-title">Close to you</p>
+        <p class="track-artist">藤井 風</p>
+        <a class="text-link" id="listen-link" href="https://music.youtube.com/search?q=Fujii+Kaze+Close+to+you" target="_blank" rel="noopener noreferrer">在音乐平台聆听 <span>↗</span></a>
+      </div>
+    </header>
+
+    <main>
+      <section class="invitation" id="invitation" aria-labelledby="invitation-title">
+        <div class="invitation-heading">
+          <p class="eyebrow"><span class="tiny-star">✦</span> A LETTER, JUST FOR YOU</p>
+          <h1 id="invitation-title">有一份偏爱，<br />想亲手交给你。</h1>
+          <p class="invitation-subtitle">有些话，写在信里。 有些心意，留给今天。</p>
+        </div>
+
+        <div class="envelope-stage" id="envelope-stage">
+          <span class="side-note" aria-hidden="true">SOME THINGS ARE BETTER IN A LETTER.</span>
+          <span class="orbit-star star-one" aria-hidden="true">✧</span>
+          <span class="orbit-star star-two" aria-hidden="true">+</span>
+          <button class="envelope" id="open-envelope" type="button" aria-label="拆开生日信封" aria-controls="letter" aria-expanded="false">
+            <span class="envelope-back"></span>
+            <span class="envelope-insert"><span>HAPPY<br /><i>BIRTHDAY</i></span><span class="insert-rule"></span><span class="insert-small">TO MY FAVOURITE PERSON</span></span>
+            <span class="envelope-front"><span class="envelope-fold fold-left"></span><span class="envelope-fold fold-right"></span><span class="envelope-fold fold-bottom"></span></span>
+            <span class="envelope-flap"></span>
+            <span class="envelope-address"><span class="envelope-to">TO: <span data-recipient>最特别的你</span></span><span class="envelope-handwriting">With love, always.</span></span>
+            <span class="wax-seal"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 33s-12-7.2-12-15a6.4 6.4 0 0 1 12-3 6.4 6.4 0 0 1 12 3c0 7.8-12 15-12 15Z" stroke="currentColor" stroke-width="1.1"/><path d="M18 25c4-1 7-4 11-5" stroke="currentColor" stroke-width=".8"/></svg></span>
+            <span class="envelope-edition">ONE OF ONE · MADE FOR YOU</span>
+          </button>
+          <div class="envelope-shadow" aria-hidden="true"></div>
+        </div>
+
+        <button class="open-prompt" id="open-prompt" type="button"><span class="prompt-line"></span>轻触信封 · 开启这份心意<span class="prompt-arrow">↗</span></button>
+        <div class="invitation-footer"><span>PRIVATE & PERSONAL</span><span>ONLY FOR YOU <span class="footer-star">✧</span></span></div>
+      </section>
+
+      <article class="letter" id="letter" aria-labelledby="birthday-title" hidden>
+        <div class="letter-topline"><span>THE BIRTHDAY EDITION</span><button id="close-letter" class="quiet-button" type="button">重新封好 <span aria-hidden="true">↗</span></button></div>
+        <section class="greeting">
+          <div class="greeting-copy">
+            <p class="eyebrow">TO <span data-recipient>最特别的你</span> <span class="tiny-star">✦</span></p>
+            <h1 id="birthday-title">生日快乐。</h1>
+            <p class="greeting-subtitle" id="greeting-subtitle">愿你尽兴，愿你自由。</p>
+            <p class="greeting-english">Another year of being wonderfully you.</p>
+          </div>
+          <div class="birthday-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span class="art-star">✧</span><span class="art-number">for<br /><i>you.</i></span><span class="art-caption">WITH ALL MY LOVE</span></div>
+        </section>
+        <div class="letter-body"><span class="letter-salutation">亲爱的<span data-recipient>最特别的你</span>：</span><div id="birthday-message" class="message"></div><div class="signature"><span>永远站在你这边的，</span><span id="sender">一直偏爱你的人</span><i>with love.</i></div></div>
+
+        <section class="memories" id="memories" aria-labelledby="memories-title" hidden>
+          <div class="section-label"><span>01 / LITTLE MOMENTS</span><span>值得收藏的瞬间</span></div>
+          <h2 id="memories-title">普通的日子，<i>因为你而闪光。</i></h2>
+          <div class="photo-grid" id="photo-grid"></div>
+          <p class="memories-caption">Every little moment, a little more in love with life.</p>
+        </section>
+
+        <section class="gift-section" aria-labelledby="gift-title">
+          <div class="section-label"><span>A LITTLE SOMETHING MORE</span><span class="tiny-star">✦</span></div>
+          <h2 id="gift-title">还有一份，<i>穿在身上的好心情。</i></h2>
+          <p class="gift-intro">把选择的快乐，也一起送给你。</p>
+          <div class="voucher" id="voucher">
+            <div class="voucher-main"><div class="voucher-top"><span>THE BIRTHDAY GIFT</span><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 4v24M4 16h24M7.5 7.5l17 17M24.5 7.5l-17 17" stroke="currentColor" stroke-width=".8"/><circle cx="16" cy="16" r="9" stroke="currentColor" stroke-width=".8"/></svg></div><p class="voucher-type">服装代金券</p><p class="voucher-value"><span>¥</span><strong id="voucher-amount">3,000</strong><span class="voucher-currency">CNY</span></p><p class="voucher-note" id="voucher-note">挑你喜欢的，剩下的交给我。</p><div class="voucher-bottom"><span>EXCLUSIVELY FOR <span data-recipient>最特别的你</span></span><span>NO. 0001</span></div></div>
+            <div class="voucher-stub"><span class="stub-label">A GIFT, NOT A LIMIT.</span><div class="barcode" aria-hidden="true"></div><span class="stub-love">WITH LOVE ♡</span></div>
+          </div>
+          <div class="gift-actions"><button class="primary-button" id="accept-gift" type="button">收下这份偏爱 <span aria-hidden="true">↗</span></button><button class="save-button" id="save-voucher" type="button">保存礼品券 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
+          <p class="redemption-note" id="redemption-note">这是一份私人生日礼物。选中喜欢的衣服，就来找我兑现。</p>
+        </section>
+        <footer class="letter-footer"><span class="ending-star">✧</span><p>新的一岁，继续做你自己。<br /><span>你值得所有美好的事。</span></p><span class="footer-wordmark">dear you.</span><span class="footer-fine">SEALED WITH LOVE · OPENED BY YOU</span></footer>
+      </article>
+    </main>
+
+    <div class="celebration" id="celebration" aria-hidden="true"></div>
+    <div id="status" class="toast" role="status" aria-live="polite"></div>
+    <audio id="background-music" loop preload="none"></audio>
+    <dialog class="photo-dialog" id="photo-dialog" aria-label="照片回忆"><button class="dialog-close" id="close-photo" type="button" aria-label="关闭照片">×</button><button class="photo-prev" id="photo-prev" type="button" aria-label="上一张照片">←</button><figure><img id="lightbox-image" alt="" /><figcaption id="lightbox-caption"></figcaption></figure><button class="photo-next" id="photo-next" type="button" aria-label="下一张照片">→</button></dialog>
+
+    <button class="editor-launch" id="editor-launch" type="button" hidden>编辑这份心意 <span>↗</span></button>
+    <dialog class="editor-dialog" id="editor-dialog" aria-labelledby="editor-title">
+      <form id="editor-form">
+        <div class="editor-heading"><div><p class="eyebrow">THE MAKING OF A GIFT</p><h2 id="editor-title">把心意，写成你的。</h2></div><button class="dialog-close" id="close-editor" type="button" aria-label="关闭编辑">×</button></div>
+        <p class="editor-explainer">照片和音乐只在本机处理。完成后导出网页，素材会一起打包，发给她的页面里不会显示编辑入口。</p>
+        <div class="editor-two-col"><label>送给<input name="recipient" maxlength="24" required /></label><label>来自<input name="sender" maxlength="24" required /></label></div>
+        <label>生日标题<input name="title" maxlength="32" required /></label><label>一句祝福<input name="subtitle" maxlength="64" required /></label><label>想对她说的话<textarea name="message" rows="7" maxlength="2500" required></textarea></label>
+        <div class="editor-two-col"><label>礼品券金额（元）<input name="amount" type="number" min="1" max="999999" step="1" required /></label><label>礼品券小字<input name="voucherNote" maxlength="60" required /></label></div>
+        <label class="upload-box"><span>＋ 添加你们的照片 <small>最多 9 张 · 自动压缩 · 可拖动缩略图排序</small></span><input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple /></label><div class="editor-photos" id="editor-photos"></div>
+        <label class="upload-box"><span>♫ 添加背景音乐 <small>Close to you · 藤井 風 · MP3 / M4A / WAV，最大 20 MB</small></span><input id="audio-input" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg" /></label><div class="audio-file-info"><span id="audio-file-name">尚未添加音频，访客可前往音乐平台聆听。</span><button id="remove-audio" class="quiet-button" type="button" hidden>移除音乐</button></div>
+        <p class="editor-explainer">请使用你有权使用的音频文件。打开信封后会尝试播放，也可以随时暂停。</p>
+        <div class="editor-actions"><button class="primary-button" id="apply-editor" type="submit">保存并预览 <span>↗</span></button><button class="save-button" id="export-gift" type="button">导出完整网页 ↓</button></div>
+        <p class="editor-export-note">导出的 index.html 已包含照片、音乐和文案，可直接部署到静态网站托管。保存在本机的预览不会自动同步到朋友的设备。</p>
+      </form>
+    </dialog>
+    <noscript><p class="noscript-note">请在浏览器中启用 JavaScript，打开这封生日来信。</p></noscript>
+  </body>
+</html>
