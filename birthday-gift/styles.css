@@ -9,6 +9,7 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}.envelope:hover{transform:translateX(-50%) rotate(-5deg)}.celebration{display:none}}
 /* Programmatic heading focus moves the screen reader without a decorative box. */
 #birthday-title:focus{outline:none}
+#sender{max-width:100%;text-align:right;line-height:2;overflow-wrap:anywhere}
 /* Keep small photo sets intentional, and make upload controls keyboard visible. */
 .photo-grid:has(.photo-item:only-child){grid-template-columns:1fr}
 .photo-item:only-child{grid-column:auto;grid-row:auto;aspect-ratio:4/3}
