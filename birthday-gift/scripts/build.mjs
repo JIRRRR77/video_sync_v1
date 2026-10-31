@@ -17,6 +17,15 @@ for (const media of [...(config.photos || []).map(photo => typeof photo === 'str
   if (!resolved.startsWith(root + path.sep)) throw new Error('Media paths must stay inside the site directory');
   await access(resolved);
 }
+// Keep the chosen music inside the finished HTML so manual uploads cannot
+// accidentally leave it behind. Development still serves the source MP3.
+if (config.music?.src && !/^(https?:|data:)/i.test(config.music.src)) {
+  const audioTypes = {'.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.ogg': 'audio/ogg'};
+  const audioType = audioTypes[path.extname(config.music.src).toLowerCase()];
+  if (!audioType) throw new Error('Use MP3, M4A, WAV or OGG for background music');
+  const audio = await readFile(path.resolve(root, config.music.src));
+  config.music.src = `data:${audioType};base64,${audio.toString('base64')}`;
+}
 const html = template
   .replace('<link rel="stylesheet" href="styles.css" />', () => `<style id="gift-styles">${css.replace(/<\/style/gi, '<\\/style')}</style>`)
   .replace('<script id="gift-config" type="application/json">null</script>', () => `<script id="gift-config" type="application/json">${JSON.stringify(config).replace(/</g, '\\u003c')}</script>`)

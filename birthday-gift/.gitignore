@@ -9,3 +9,5 @@ assets/*.jpeg
 assets/*.png
 assets/*.webp
 !assets/.gitkeep
+# This background track was explicitly supplied for the shared birthday page.
+!assets/close-to-you.mp3

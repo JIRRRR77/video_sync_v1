@@ -1,7 +1,8 @@
 """Functional checks using Playwright and the cloud image's Chromium.
 
 Run with the site server on port 4173. Test artifacts are ignored by Git.
-Generated image/audio fixtures test the pipeline; they are not recipient assets.
+Default playback exercises the configured song. Temporary image/audio fixtures
+exercise the editor and export pipeline; they are not recipient assets.
 """
 import json
 import math
@@ -74,15 +75,32 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     settle(page)
     page.screenshot(path=RESULTS / "desktop-envelope.png", full_page=True)
     check("recipient view hides editing and absent-photo placeholders", page.locator("#memories").is_hidden())
-    page.locator("#music-toggle").click()
-    expect(page.locator("#music-panel")).to_be_visible()
-    check("missing audio provides a real listening link, without fake playback", "music.youtube.com" in page.locator("#listen-link").get_attribute("href"))
-    page.keyboard.press("Escape")
+    has_music = page.locator("#background-music").evaluate("a => Boolean(a.getAttribute('src'))")
+    check("music waits for a user gesture", page.locator("#background-music").evaluate("a => a.paused && a.currentTime === 0"))
+    if not has_music:
+        page.locator("#music-toggle").click()
+        expect(page.locator("#music-panel")).to_be_visible()
+        check("missing audio provides a real listening link, without fake playback", "music.youtube.com" in page.locator("#listen-link").get_attribute("href"))
+        page.keyboard.press("Escape")
     page.locator("#open-envelope").focus()
     page.keyboard.press("Enter")
     expect(page.locator("#letter")).to_be_visible(timeout=6000)
     expect(page.locator("#invitation")).to_be_hidden()
     check("keyboard opens animated envelope and reveals configured voucher", page.locator("#voucher-amount").inner_text() == "3,000")
+    if has_music:
+        page.wait_for_function("() => { const a = document.querySelector('#background-music'); return !a.paused && a.currentTime > 0 && Number.isFinite(a.duration); }")
+        duration = page.locator("#background-music").evaluate("a => a.duration")
+        check("provided song plays in full after opening the envelope", 218 < duration < 219)
+        page.locator("#background-music").evaluate("a => { a.currentTime = a.duration - 0.25; }")
+        page.wait_for_function("() => { const a = document.querySelector('#background-music'); return a.loop && !a.paused && a.currentTime < 2; }", timeout=10000)
+        check("background song loops at its actual end", page.locator("#background-music").evaluate("a => a.loop && !a.paused && a.currentTime < 2"))
+        page.locator("#music-toggle").click()
+        check("provided song pauses from its music control", page.locator("#background-music").evaluate("a => a.paused"))
+        page.locator("#music-toggle").click()
+        page.wait_for_function("() => !document.querySelector('#background-music').paused")
+        check("provided song resumes from its music control", page.locator("#background-music").evaluate("a => !a.paused"))
+        if page.locator("#gift-config").inner_text().strip() != "null":
+            check("production HTML embeds the provided MP3", page.locator("#background-music").evaluate("a => a.getAttribute('src').startsWith('data:audio/mpeg;base64,')"))
     settle(page)
     page.screenshot(path=RESULTS / "desktop-letter.png", full_page=True)
     page.locator("#accept-gift").click()
@@ -112,6 +130,9 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     preview.screenshot(path=RESULTS / "mobile-recipient-envelope.png", full_page=True)
     preview.locator("#open-envelope").click()
     expect(preview.locator("#letter")).to_be_visible(timeout=6000)
+    if has_music:
+        preview.wait_for_function("() => { const a = document.querySelector('#background-music'); return !a.paused && a.currentTime > 0 && a.duration > 218 && a.duration < 219; }")
+        check("provided song also starts on a phone's opening tap", preview.locator("#background-music").evaluate("a => !a.paused"))
     settle(preview)
     preview.screenshot(path=RESULTS / "mobile-recipient-letter.png", full_page=True)
     with preview.expect_download() as mobile_download:
@@ -125,6 +146,15 @@ with tempfile.TemporaryDirectory(prefix="gift-test-") as temporary, sync_playwri
     page.goto(BASE + "/?edit")
     expect(page.locator("#editor-launch")).to_be_visible()
     page.locator("#editor-launch").click()
+    if has_music:
+        page.locator("#remove-audio").click()
+        page.locator("#apply-editor").click()
+        expect(page.locator("#editor-dialog")).not_to_be_visible()
+        page.locator("#music-toggle").click()
+        expect(page.locator("#music-panel")).to_be_visible()
+        check("removing the song restores the music-platform fallback", "music.youtube.com" in page.locator("#listen-link").get_attribute("href"))
+        page.keyboard.press("Escape")
+        page.locator("#editor-launch").click()
     page.locator('[name="recipient"]').fill("亲爱的她")
     page.locator('[name="sender"]').fill("我")
     page.locator('[name="message"]').fill('生日快乐。\n\n愿你一直开心。<script>alert("test")</script>')

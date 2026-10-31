@@ -10,7 +10,7 @@
   "music": {
     "title": "Close to you",
     "artist": "藤井 風",
-    "src": "",
+    "src": "assets/close-to-you.mp3",
     "listenUrl": "https://music.youtube.com/search?q=Fujii+Kaze+Close+to+you"
   }
 }
